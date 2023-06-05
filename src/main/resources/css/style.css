@@ -1,0 +1,39 @@
+.root {
+    -fx-font-family: "Arial";
+}
+
+.header {
+    -fx-background-color: #4e88e8;
+    -fx-padding: 10px;
+}
+
+.title {
+    -fx-text-fill: white;
+    -fx-font-size: 24px;
+}
+
+.button-bar {
+    -fx-padding: 10px;
+}
+
+.button-bar > .button {
+    -fx-padding: 5px 10px;
+    -fx-font-size: 14px;
+}
+
+.table-view {
+    -fx-font-size: 14px;
+}
+
+.table-view .column-header {
+    -fx-background-color: #e0e0e0;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: bold;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #4e88e8;
+    -fx-text-fill: white;
+}
