@@ -10,7 +10,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -20,6 +22,7 @@ import java.io.IOException;
 public class HelloApplication extends Application {
 
     private ObservableList<BookMark> bookmarks;
+    private ObservableList<BookMark> allBookmarks;
     private TableView<BookMark> tableView;
 
     public static void main(String[] args) {
@@ -29,6 +32,7 @@ public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) {
         bookmarks = FXCollections.observableArrayList();
+        allBookmarks = FXCollections.observableArrayList();
 
         tableView = new TableView<>();
         tableView.setItems(bookmarks);
@@ -38,6 +42,25 @@ public class HelloApplication extends Application {
 
         TableColumn<BookMark, String> descriptionColumn = new TableColumn<>("Описание");
         descriptionColumn.setCellValueFactory(data -> data.getValue().descriptionProperty());
+        descriptionColumn.setCellFactory(new Callback<>() {
+            @Override
+            public TableCell<BookMark, String> call(TableColumn<BookMark, String> param) {
+                return new TableCell<>() {
+                    @Override
+                    protected void updateItem(String item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (item != null) {
+                            setText(item);
+                            setWrapText(true);
+                            setTextAlignment(TextAlignment.LEFT);
+                            setPrefHeight(Control.USE_COMPUTED_SIZE);
+                        }
+                    }
+                };
+            }
+        });
+        descriptionColumn.setPrefWidth(200);
+        descriptionColumn.setStyle("-fx-cell-size: 40px;");
 
         TableColumn<BookMark, String> categoryColumn = new TableColumn<>("Категория");
         categoryColumn.setCellValueFactory(data -> data.getValue().categoryProperty());
@@ -110,7 +133,7 @@ public class HelloApplication extends Application {
 
                 BookMark bookmark = new BookMark(url, description, category);
                 bookmarks.add(bookmark);
-
+                allBookmarks = bookmarks;
                 saveToFile(bookmark); // Сохранение в файл
                 return bookmark;
             }
@@ -126,6 +149,9 @@ public class HelloApplication extends Application {
 
         ButtonType filterButton = new ButtonType("Применить", ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(filterButton, ButtonType.CANCEL);
+
+        ButtonType clearFilterButton = new ButtonType("Снять фильтр", ButtonBar.ButtonData.OTHER);
+        dialog.getDialogPane().getButtonTypes().add(clearFilterButton);
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -145,6 +171,8 @@ public class HelloApplication extends Application {
             if (dialogButton == filterButton) {
                 String selectedCategory = categoryComboBox.getValue();
                 filterByCategory(selectedCategory);
+            } else if (dialogButton == clearFilterButton) {
+                clearFilter();
             }
             return null;
         });
@@ -152,8 +180,12 @@ public class HelloApplication extends Application {
         dialog.showAndWait();
     }
 
+    private void clearFilter() {
+        tableView.setItems(allBookmarks);
+    }
+
     private void saveToFile(BookMark bookmark) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("bookmarks.txt", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("bookmarks.txt", false))) {
             writer.write(bookmark.toFileString());
             writer.newLine();
         } catch (IOException e) {
@@ -163,7 +195,7 @@ public class HelloApplication extends Application {
 
     private ObservableList<String> getUniqueCategories() {
         ObservableList<String> categories = FXCollections.observableArrayList();
-        for (BookMark bookmark : bookmarks) {
+        for (BookMark bookmark : allBookmarks) {
             if (!categories.contains(bookmark.getCategory())) {
                 categories.add(bookmark.getCategory());
             }
@@ -172,11 +204,12 @@ public class HelloApplication extends Application {
     }
 
     private void filterByCategory(String category) {
-        tableView.getItems().clear();
-        for (BookMark bookmark : bookmarks) {
+        ObservableList<BookMark> categoryBookmarks = FXCollections.observableArrayList();
+        for (BookMark bookmark : allBookmarks) {
             if (bookmark.getCategory().equals(category)) {
-                tableView.getItems().add(bookmark);
+                categoryBookmarks.add(bookmark);
             }
         }
+        tableView.setItems(categoryBookmarks);
     }
 }
